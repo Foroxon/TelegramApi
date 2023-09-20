@@ -1,11 +1,8 @@
 package org.telegram.api.functions.channels;
 
+import org.telegram.api.input.chat.TLAbsInputChannel;
 import org.telegram.api.messages.chats.TLMessagesChats;
-import org.telegram.tl.StreamingUtils;
-import org.telegram.tl.TLContext;
-import org.telegram.tl.TLIntVector;
-import org.telegram.tl.TLMethod;
-import org.telegram.tl.TLObject;
+import org.telegram.tl.*;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -14,13 +11,14 @@ import java.io.OutputStream;
 /**
  * The type TL request channel get channels
  */
-public class TLRequestChannelsGetChannels extends TLMethod<TLMessagesChats> {
+public class
+TLRequestChannelsGetChannels extends TLMethod<TLMessagesChats> {
     /**
      * The constant CLASS_ID.
      */
     public static final int CLASS_ID = 0xa7f6bbb;
 
-    private TLIntVector id;
+    private TLVector<TLAbsInputChannel> id;
 
     /**
      * Instantiates a new TL request channel get channels
@@ -45,11 +43,11 @@ public class TLRequestChannelsGetChannels extends TLMethod<TLMessagesChats> {
         throw new IOException("Incorrect response type. Expected " + TLMessagesChats.class.getName() +", got: " + res.getClass().getName());
     }
 
-    public TLIntVector getId() {
+    public TLVector<TLAbsInputChannel> getId() {
         return id;
     }
 
-    public void setId(TLIntVector id) {
+    public void setId(TLVector<TLAbsInputChannel> id) {
         this.id = id;
     }
 
@@ -60,7 +58,7 @@ public class TLRequestChannelsGetChannels extends TLMethod<TLMessagesChats> {
 
     public void deserializeBody(InputStream stream, TLContext context)
             throws IOException {
-        this.id = StreamingUtils.readTLIntVector(stream, context);
+        this.id = (TLVector<TLAbsInputChannel>) StreamingUtils.readTLVector(stream, context);
     }
 
     public String toString() {

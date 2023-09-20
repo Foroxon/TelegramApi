@@ -24,10 +24,7 @@ import org.telegram.api.channel.TLChannelParticipants;
 import org.telegram.api.channel.filters.TLChannelMessagesFilter;
 import org.telegram.api.channel.filters.TLChannelMessagesFilterEmpty;
 import org.telegram.api.channel.participants.*;
-import org.telegram.api.channel.participants.filters.TLChannelParticipantsFilterAdmins;
-import org.telegram.api.channel.participants.filters.TLChannelParticipantsFilterBots;
-import org.telegram.api.channel.participants.filters.TLChannelParticipantsFilterKicked;
-import org.telegram.api.channel.participants.filters.TLChannelParticipantsFilterRecent;
+import org.telegram.api.channel.participants.filters.*;
 import org.telegram.api.channel.participants.role.TLChannelParticipantRoleEditor;
 import org.telegram.api.channel.participants.role.TLChannelParticipantRoleEmpty;
 import org.telegram.api.channel.participants.role.TLChannelParticipantRoleModerator;
@@ -1163,5 +1160,6 @@ public class TLApiContext extends TLContext {
         registerClass(TLRequestUploadGetCdnFile.CLASS_ID, TLRequestUploadGetCdnFile.class);
         registerClass(TLRequestReuploadCdnFile.CLASS_ID, TLRequestReuploadCdnFile.class);
         registerClass(TLRequestHelpGetCdnConfig.CLASS_ID, TLRequestHelpGetCdnConfig.class);
+        registerClass(TLChannelParticipantsFilterSearch.CLASS_ID, TLChannelParticipantsFilterSearch.class);
     }
 }

@@ -207,27 +207,7 @@ public class KernelAuth {
                 } catch (IOException | TimeoutException e) {
                     BotLogger.error(LOGTAG, e);
                 }
-                BotLogger.info(LOGTAG,"Sending code to phone " + config.getPhoneNumber() + "...");
-                try {
-                    final TLRequestAuthImportBotAuthorization botAuthorization = new TLRequestAuthImportBotAuthorization();
-                    botAuthorization.setApiId(this.apiKey);
-                    botAuthorization.setApiHash(this.apiHash);
-                    botAuthorization.setBotAuthToken(config.getBotToken());
-                    TLAuthorization authorization = kernelComm.getApi().doRpcCallNonAuth(botAuthorization);
-
-                    if (authorization != null) {
-                        config.setRegistered(true);
-                        getApiState().doAuth(authorization);
-                        BotLogger.info(LOGTAG,"Activation complete as #" + getApiState().getObj().getUid());
-                        kernelComm.getApi().doRpcCall(new TLRequestUpdatesGetState());
-                        BotLogger.info(LOGTAG,"Loaded initial state");
-                        result =  LoginStatus.BOTLOGIN;
-                    }
-                } catch (RpcException e) {
-                    BotLogger.severe(LOGTAG, e);
-                } catch (TimeoutException e) {
-                    BotLogger.error(LOGTAG, e);
-                }
+                result = importBotAuthorization(1);
             }
         } catch (IOException ex) {
             BotLogger.error(LOGTAG, ex);
@@ -239,6 +219,39 @@ public class KernelAuth {
         }
 
         return result;
+    }
+
+    private LoginStatus importBotAuthorization(int count) throws IOException {
+        try {
+            final TLRequestAuthImportBotAuthorization botAuthorization = new TLRequestAuthImportBotAuthorization();
+            botAuthorization.setApiId(this.apiKey);
+            botAuthorization.setApiHash(this.apiHash);
+            botAuthorization.setBotAuthToken(config.getBotToken());
+            TLAuthorization authorization = kernelComm.getApi().doRpcCallNonAuth(botAuthorization);
+
+            if (authorization != null) {
+                config.setRegistered(true);
+                getApiState().doAuth(authorization);
+                BotLogger.info(LOGTAG, "Activation complete as #" + getApiState().getObj().getUid());
+                kernelComm.getApi().doRpcCall(new TLRequestUpdatesGetState());
+                BotLogger.info(LOGTAG, "Loaded initial state");
+                return LoginStatus.BOTLOGIN;
+            }
+        } catch (RpcException e) {
+            BotLogger.info(LOGTAG, "RpcException: " + e.getErrorCode() + " : " + e.getMessage());
+            if (e.getErrorCode() == ERROR303) {
+                final int destDC = updateDCWhenLogin(e);
+                if (destDC != -1 && count < 5) {
+                    getApiState().setPrimaryDc(destDC);
+                    kernelComm.getApi().switchToDc(destDC);
+                    return importBotAuthorization(count + 1);
+                }
+            }
+        } catch (TimeoutException e) {
+            BotLogger.error(LOGTAG, e);
+        }
+
+        return LoginStatus.BOTLOGINERROR;
     }
 
     private void createNextCodeTimer(int timeout) {
@@ -281,6 +294,16 @@ public class KernelAuth {
     }
 
     private TLSentCode retryLogin(int destDC) throws IOException, TimeoutException {
+        final TLSentCode sentCode;
+        kernelComm.getApi().switchToDc(destDC);
+        final TLRequestAuthSendCode tlRequestAuthSendCode = getSendCodeRequest();
+        sentCode = kernelComm.getApi().doRpcCallNonAuth(tlRequestAuthSendCode);
+        resetTimer();
+        createNextCodeTimer(sentCode.getTimeout());
+        return sentCode;
+    }
+
+    private TLSentCode retryBotLogin(int destDC) throws IOException, TimeoutException {
         final TLSentCode sentCode;
         kernelComm.getApi().switchToDc(destDC);
         final TLRequestAuthSendCode tlRequestAuthSendCode = getSendCodeRequest();
